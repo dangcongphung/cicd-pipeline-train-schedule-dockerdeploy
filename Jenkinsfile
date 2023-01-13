@@ -14,8 +14,8 @@ pipeline {
             }
             steps {
                 script {
-                    app = docker.build(dangcongphung/train-schedule")
-                    app.inside {
+                     app = docker.build(dangcongphung/train-schedule")
+                     app.inside {
                         sh 'echo $(curl localhost:8080)'
                     }
                 }
