@@ -8,14 +8,15 @@ pipeline {
                 archiveArtifacts artifacts: 'dist/trainSchedule.zip'
             }
         }
-        stage('Build Docker Image') {
+        stage('Push Docker Image') {
             when {
                 branch 'master'
             }
             steps {
                 script {
-                    app.inside {
-                        sh 'echo $(curl localhost:8080)'
+                    docker.withRegistry('https://registry.hub.docker.com', 'DockerHub_dangcongphung_credentia') {
+                        app.push("${env.BUILD_NUMBER}")
+                        app.push("latest")
                     }
                 }
             }
