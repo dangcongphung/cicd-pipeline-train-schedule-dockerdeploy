@@ -34,12 +34,12 @@ pipeline {
                 }
             }
         }
-        stage('DeployToProduction') {
+        stage('DeployToProduction using docker') {
             when {
                 branch 'master'
             }
             steps {
-                input 'Deploy to Production?'
+                input 'Deploy to Production using docker ?'
                 milestone(1)
                 withCredentials([usernamePassword(credentialsId: 'root_AP29_AP31_credential', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
                     script {
@@ -52,6 +52,37 @@ pipeline {
                         }
                         sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@172.20.4.107 \"docker run --restart always --name train-schedule -p 8080:8080 -d dangcongphung/train-schedule:${env.BUILD_NUMBER}\""
                     }
+                }
+            }
+        }
+        stage('DeployToProduction using K8S') {
+            when {
+                branch 'master'
+            }
+            steps {
+                input 'Deploy to Production using K8S?'
+                milestone(1)
+                withCredentials([usernamePassword(credentialsId: 'root_AP29_AP31_credential', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
+					sshPublisher(
+                        failOnError: true,
+                        continueOnError: false,
+                        publishers: [
+                            sshPublisherDesc(
+                                configName: 'Pro_UATK8SMN01',
+                                sshCredentials: [
+                                    username: "$USERNAME",
+                                    encryptedPassphrase: "$USERPASS"
+                                ], 
+                                transfers: [
+                                    sshTransfer(
+                                        sourceFiles: 'train.yaml',
+                                        remoteDirectory: '/tmp',
+                                        execCommand: 'sudo kubectl delete pods train && rm -rf /etc/containerd/train/* && yes | cp -rf /tmp/train.yaml /etc/containerd/train/ && sudo rm -rf /tmp/*'
+                                    )
+                                ]
+                            )
+                        ]
+                    )
                 }
             }
         }
