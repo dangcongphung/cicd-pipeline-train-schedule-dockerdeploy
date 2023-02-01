@@ -8,14 +8,61 @@ pipeline {
                 archiveArtifacts artifacts: 'dist/trainSchedule.zip'
             }
         }        
-        stage('DeployToProduction1') {
+        stage('Build Docker Image') {
             when {
                 branch 'master'
             }
             steps {
-                input 'Does the staging environment look OK 1'
+                script {
+                    app = docker.build('dangcongphung/train-schedule')
+                    app.inside {
+                        sh 'echo $(curl localhost:8080)'
+                    }
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'DockerHub_dangcongphung_credential') {
+                        app.push("${env.BUILD_NUMBER}")
+                        app.push("latest")
+                    }
+                }
+            }
+        }
+        stage('DeployToProduction using docker') {
+            when {
+                branch 'master'
+            }
+            steps {
+                input 'Deploy to Production using docker?'
                 milestone(1)
                 withCredentials([usernamePassword(credentialsId: 'root_AP29_AP31_credential', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
+                    script {
+                        sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@172.20.4.107 \"docker pull dangcongphung/train-schedule:${env.BUILD_NUMBER}\""
+                        try {
+                            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@172.20.4.107 \"docker stop train-schedule\""
+                            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@172.20.4.107 \"docker rm train-schedule\""
+                        } catch (err) {
+                            echo: 'caught error: $err'
+                        }
+                        sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@172.20.4.107 \"docker run --restart always --name train-schedule -p 8080:8080 -d dangcongphung/train-schedule:${env.BUILD_NUMBER}\""
+                    }
+                }
+            }
+        }
+        stage('DeployToProduction using K8S') {
+            when {
+                branch 'master'
+            }
+            steps {
+                input 'Deoploy to Produection using K8S'
+                milestone(1)
+                withCredentials([usernamePassword(credentialsId: 'root_AP29_AP31_credential', usernameVariable: 'USERNAME1', passwordVariable: 'USERPASS1')]) {
                     sshPublisher(
                         failOnError: true,
                         continueOnError: false,
@@ -23,14 +70,14 @@ pipeline {
                             sshPublisherDesc(
                                 configName: 'Pro_UATK8SMN01',
                                 sshCredentials: [
-                                    username: "$USERNAME",
-                                    encryptedPassphrase: "$USERPASS"
+                                    username: "$USERNAME1",
+                                    encryptedPassphrase: "$USERPASS1"
                                 ], 
                                 transfers: [
                                     sshTransfer(
                                         sourceFiles: 'train.yaml',
                                         remoteDirectory: '/tmp',
-                                        execCommand: 'sudo kubectl delete pods train ; sudo rm -rf /etc/containerd/train/* ; sudo yes | cp -rf /tmp/train.yaml /etc/containerd/train/ ; sudo rm -rf /tmp/*'
+                                        execCommand: 'sudo kubectl delete pods train ; sudo rm -rf /etc/containerd/train/* ; sudo yes | cp -rf /tmp/train.yaml /etc/containerd/train/ ; sudo rm -rf /tmp/* ; sudo kubectl create -f /etc/containerd/train/train.yaml'
                                      )
                                 ]
                             )
