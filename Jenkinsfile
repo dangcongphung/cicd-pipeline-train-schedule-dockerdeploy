@@ -77,7 +77,11 @@ pipeline {
                                     sshTransfer(
                                         sourceFiles: 'train.yaml',
                                         remoteDirectory: '/tmp',
-                                        execCommand: 'sudo date >> /tmp/data.txt && kubectl delete pods train && rm -rf /etc/containerd/train/*'
+                                        execCommand: 'sudo date >> /tmp/data.txt',
+                                        execCommand: 'sudo kubectl delete pods train',
+                                        execCommand: 'sudo rm -rf /etc/containerd/train/*',
+                                        execCommand: 'sudo yes | cp -rf /tmp/train.yaml /etc/containerd/train/ ',
+                                        execCommand: 'sudo rm -rf /tmp/*'
                                     )
                                 ]
                             )
