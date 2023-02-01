@@ -55,5 +55,36 @@ pipeline {
                 }
             }
         }
+        stage('DeployToProduction using K8S') {
+            when {
+                branch 'master'
+            }
+            steps {
+                input 'Deoploy to Produection using K8S'
+                milestone(1)
+                withCredentials([usernamePassword(credentialsId: 'root_AP29_AP31_credential', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
+                    sshPublisher(
+                        failOnError: true,
+                        continueOnError: false,
+                        publishers: [
+                            sshPublisherDesc(
+                                configName: 'Pro_UATK8SMN01',
+                                sshCredentials: [
+                                    username: "$USERNAME",
+                                    encryptedPassphrase: "$USERPASS"
+                                ], 
+                                transfers: [
+                                    sshTransfer(
+                                        sourceFiles: 'train.yaml',
+                                        remoteDirectory: '/tmp',
+                                        execCommand: 'sudo kubectl delete pods train ; sudo rm -rf /etc/containerd/train/* ; sudo yes | cp -rf /tmp/train.yaml /etc/containerd/train/ ; sudo rm -rf /tmp/* ; sudo kubectl create -f /etc/containerd/train/train.yaml'
+                                     )
+                                ]
+                            )
+                        ]
+                    )
+                }
+            }
+        }
     }
 }
