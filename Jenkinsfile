@@ -39,8 +39,6 @@ pipeline {
                 branch 'master'
             }
             steps {
-                input 'Deploy to Production using docker?'
-                milestone(1)
                 withCredentials([usernamePassword(credentialsId: 'root_AP29_AP31_credential', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
                     script {
                         sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@172.20.4.107 \"docker pull dangcongphung/train-schedule:${env.BUILD_NUMBER}\""
@@ -60,8 +58,6 @@ pipeline {
                 branch 'master'
             }
             steps {
-                input 'Deoploy to Produection using K8S'
-                milestone(1)
                 withCredentials([usernamePassword(credentialsId: 'root_AP29_AP31_credential', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
                     sshPublisher(
                         failOnError: true,
@@ -77,7 +73,7 @@ pipeline {
                                     sshTransfer(
                                         sourceFiles: 'train.yaml',
                                         remoteDirectory: '/tmp',
-                                        execCommand: 'sudo kubectl delete pods train ; sudo rm -rf /etc/containerd/train/* ; sudo yes | cp -rf /tmp/train.yaml /etc/containerd/train/ ; sudo rm -rf /tmp/* ; sudo kubectl create -f /etc/containerd/train/train.yaml'
+                                        execCommand: 'sudo kubectl delete pods train ; sudo rm -rf /etc/containerd/train/*'
                                      )
                                 ]
                             )
