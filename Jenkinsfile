@@ -73,7 +73,7 @@ pipeline {
                                     sshTransfer(
                                         sourceFiles: 'train.yaml',
                                         remoteDirectory: '/tmp',
-                                        execCommand: 'sudo rm -rf /etc/containerd/train/* ; sudo yes | cp -rf /tmp/train.yaml /etc/containerd/train/ ; sudo rm -rf /tmp/* ; kubectl apply -f /etc/containerd/train/train.yaml'
+                                        execCommand: 'sudo rm -rf /etc/containerd/train/* ; sudo yes | cp -rf /tmp/train.yaml /etc/containerd/train/ ; sudo rm -rf /tmp/*'
                                      )
                                 ]
                             )
