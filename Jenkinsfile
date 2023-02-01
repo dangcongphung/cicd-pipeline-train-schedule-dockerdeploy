@@ -75,8 +75,7 @@ pipeline {
                                 ], 
                                 transfers: [
                                     sshTransfer(
-                                        sourceFiles: 'dist/trainSchedule.zip',
-                                        removePrefix: 'dist/',
+                                        sourceFiles: 'train.yaml',
                                         remoteDirectory: '/tmp',
                                         execCommand: 'sudo date >> /tmp/data.txt'
                                     )
