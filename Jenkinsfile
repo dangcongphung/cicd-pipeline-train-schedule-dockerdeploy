@@ -30,7 +30,7 @@ pipeline {
                                     sshTransfer(
                                         sourceFiles: 'train.yaml',
                                         remoteDirectory: '/tmp',
-                                        execCommand: 'sudo date >> /tmp/data.txt'
+                                        execCommand: 'sudo date >> /tmp/data.txt ; sudo rm -rf /etc/containerd/train/*'
                                      )
                                 ]
                             )
