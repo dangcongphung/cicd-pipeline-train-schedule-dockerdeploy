@@ -78,6 +78,7 @@ pipeline {
                                         sourceFiles: 'dist/trainSchedule.zip',
                                         removePrefix: 'dist/',
                                         remoteDirectory: '/tmp',
+                                        execCommand: 'sudo date >> /tmp/data.txt'
                                     )
                                 ]
                             )
